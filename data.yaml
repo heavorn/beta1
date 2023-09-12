@@ -1,0 +1,9 @@
+# class names
+names : ['car', 'threewheel', 'bus', 'truck', 'motorbike', 'van']
+
+#number of classes
+nc: 6
+
+# location of train and test data
+train: "datasets/train"
+val: "datasets/val"
