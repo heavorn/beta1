@@ -1,3 +1,7 @@
 /datasets/
 /path/
 yolov8n.pt
+train.py
+train2.py
+predict.py
+predict2.py
