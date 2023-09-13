@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 from nn.modules import (SPPF, Bottleneck, C2f, Concat, Conv, Conv2, ConvTranspose, Detect, DWConv, DWConvTranspose2d,
-                                    Focus, GhostConv)
+                                    Focus, GhostConv, RepConv)
 
 from utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from utils.checks import check_requirements, check_suffix, check_yaml
