@@ -5,3 +5,4 @@ train.py
 train2.py
 predict.py
 predict2.py
+data.yaml
