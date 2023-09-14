@@ -1,6 +1,7 @@
 /datasets/
 /path/
 /old/
+/validation/
 yolov8n.pt
 train.py
 train2.py
