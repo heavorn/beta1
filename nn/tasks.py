@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 from nn.modules import (SPPF, Bottleneck, C2f, Concat, Conv, Conv2, ConvTranspose, Detect, DWConv, DWConvTranspose2d,
-                                    Focus, GhostConv, RepConv)
+                                    Focus, GhostConv, RepConv, MSBlock, MSBlock_D, MSBlockLayer)
 
 from utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from utils.checks import check_requirements, check_suffix, check_yaml
@@ -496,7 +496,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                     args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
 
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
-        if m in (Conv, ConvTranspose, GhostConv, Bottleneck, SPPF, DWConv, Focus,
+        if m in (Conv, ConvTranspose, GhostConv, Bottleneck, SPPF, DWConv, Focus, MSBlockLayer, MSBlock, MSBlock_D,
                  C2f, nn.ConvTranspose2d, DWConvTranspose2d):
         # if m in (Classify, Conv, ConvTranspose, GhostConv, Bottleneck, GhostBottleneck, SPP, SPPF, DWConv, Focus,
         #          BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, nn.ConvTranspose2d, DWConvTranspose2d, C3x, RepC3):
@@ -531,6 +531,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
         #     args.insert(1, [ch[x] for x in f])
         else:
             c2 = ch[f]
+
 
         m_ = nn.Sequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
         t = str(m)[8:-2].replace('__main__.', '')  # module type

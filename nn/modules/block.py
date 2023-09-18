@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from .conv import Conv, DWConv, GhostConv, LightConv, RepConv
 
 
-__all__ = ('DFL', 'SPPF', 'C2f', 'Bottleneck')
+__all__ = ('DFL', 'SPPF', 'C2f', 'Bottleneck', 'MSBlockLayer', 'MSBlock', 'MSBlock_D')
 
 class DFL(nn.Module):
     """
@@ -87,4 +87,51 @@ class Bottleneck(nn.Module):
     def forward(self, x):
         """'forward()' applies the YOLOv5 FPN to input data."""
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
+
+class MSBlockLayer(nn.Module):
+    """MSBlockLayer."""
+    def __init__(self, c1, c2, k=3):
+        super().__init__()
+        c_ = int(c2 * 2)    # hidden channels (expand channel defualt=2)
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = Conv(c_, c_, k, g=c_)
+        self.cv3 = Conv(c_, c2, 1, 1)
+
+    def forward(self, x):
+        """Forward pass through MSBlockLayer"""
+        x = self.cv1(x)
+        x = self.cv2(x)
+        return self.cv3(x)
+
+
+class MSBlock(nn.Module):
+    """MSBlock"""
+    def __init__(self, c1, c2, k=3, e=1.5):
+        super().__init__()
+        self.c = int(c2 * e)    # e=1.5 for down sample layer
+        self.g = self.c // 3    # n=3 number of MSBlockLayer
+        self.cv1 = Conv(c1, self.c, 1, 1)
+        self.ms_layers = [nn.Identity()]
+        self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        self.ms_layers = nn.ModuleList(self.ms_layers)
+        self.cv2 = Conv(self.c, c2, 1, 1)
+
+    def forward(self, x):
+        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        ms_layers = []
+        for i, ms_layer in enumerate(self.ms_layers):
+            x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
+            ms_layers.append(ms_layer(x))
+        return self.cv2(torch.cat(ms_layers, 1))
+
+        
+class MSBlock_D(MSBlock):
+    """MSBlock in downsample"""
+    
+    def __init__(self, c1, c2, k=3, e=1.5):
+        super().__init__(c1, c2, k, e)
+
+
+
+
 
