@@ -117,7 +117,7 @@ class MSBlock(nn.Module):
             if i == 0:
                 self.ms_layers.append(nn.Identity())
                 continue
-            self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(1)]))
+            self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(2)]))
         self.ms_layers = nn.ModuleList(self.ms_layers)
 
         # self.ms_layers = [nn.Identity()]
