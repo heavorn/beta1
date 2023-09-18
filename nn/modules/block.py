@@ -112,7 +112,7 @@ class MSBlock(nn.Module):
         self.g = self.c // 3    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
 
-        self.ms_layers = []
+        # self.ms_layers = []
         # for i in range(3):
         #     if i == 0:
         #         self.ms_layers.append(nn.Identity())
