@@ -113,16 +113,16 @@ class MSBlock(nn.Module):
         self.cv1 = Conv(c1, self.c, 1, 1)
 
         self.ms_layers = []
-        for i in range(3):
-            if i == 0:
-                self.ms_layers.append(nn.Identity())
-                continue
-            self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(1)]))
-        self.ms_layers = nn.ModuleList(self.ms_layers)
-
-        # self.ms_layers = [nn.Identity()]
-        # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        # for i in range(3):
+        #     if i == 0:
+        #         self.ms_layers.append(nn.Identity())
+        #         continue
+        #     self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(1)]))
         # self.ms_layers = nn.ModuleList(self.ms_layers)
+
+        self.ms_layers = [nn.Identity()]
+        self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.cv2 = Conv(self.c, c2, 1, 1)
 
