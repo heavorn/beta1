@@ -106,7 +106,7 @@ class MSBlockLayer(nn.Module):
 
 class MSBlock(nn.Module):
     """MSBlock"""
-    def __init__(self, c1, c2, k=3, e=1.5):
+    def __init__(self, c1, c2, k=3, e=1.5, n=1):
         super().__init__()
         self.c = int(c2 * e)    # e=1.5 for down sample layer
         self.g = self.c // 3    # n=3 number of MSBlockLayer
@@ -117,7 +117,7 @@ class MSBlock(nn.Module):
             if i == 0:
                 self.ms_layers.append(nn.Identity())
                 continue
-            self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(1)]))
+            self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(n)]))
         self.ms_layers = nn.ModuleList(self.ms_layers)
 
         # self.ms_layers = [nn.Identity()]
@@ -138,8 +138,8 @@ class MSBlock(nn.Module):
 class MSBlock_D(MSBlock):
     """MSBlock in downsample"""
     
-    def __init__(self, c1, c2, k=3, e=1.5):
-        super().__init__(c1, c2, k, e)
+    def __init__(self, c1, c2, k=3, e=1.5, n=1):
+        super().__init__(c1, c2, k, e, n)
 
 
 
