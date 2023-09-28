@@ -112,39 +112,39 @@ class MSBlock(nn.Module):
         self.g = self.c // 3    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
 
-        # self.ms_layers = []
-        # for i in range(3):
-        #     if i == 0:
-        #         self.ms_layers.append(nn.Identity())
-        #         continue
-        #     ms_layers = [MSBlockLayer(self.g, self.g, k) for _ in range(n)]
-        #     self.ms_layers.append(nn.Sequential(*ms_layers))
-        #     # self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(n)]))
-        # self.ms_layers = nn.ModuleList(self.ms_layers)
-
-        self.ms_layers = [nn.Identity()]
-        self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        self.ms_layers = []
+        for i in range(3):
+            if i == 0:
+                self.ms_layers.append(nn.Identity())
+                continue
+            ms_layers = [MSBlockLayer(self.g, self.g, k) for _ in range(n)]
+            self.ms_layers.append(nn.Sequential(*ms_layers))
+            # self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(n)]))
         self.ms_layers = nn.ModuleList(self.ms_layers)
+
+        # self.ms_layers = [nn.Identity()]
+        # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        # self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.cv2 = Conv(self.c, c2, 1, 1)
 
     def forward(self, x):
-        # y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
-        # ms_layers = []
-        # for i, ms_layer in enumerate(self.ms_layers):
-        #     x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
-        #     ms_layers.append(ms_layer(x))
-        # return self.cv2(torch.cat(ms_layers, 1))
-
-        x = self.cv1(x)
-        layers = []
+        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        ms_layers = []
         for i, ms_layer in enumerate(self.ms_layers):
-            channel = x[:, i*self.g:(i+1)*self.g,...]
-            if i >=1:
-                channel = channel + layers[i-1]
-            channel = ms_layer(channel)
-            layers.append(channel)
-        return self.cv2(torch.cat(layers, 1))
+            x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
+            ms_layers.append(ms_layer(x))
+        return self.cv2(torch.cat(ms_layers, 1))
+
+        # x = self.cv1(x)
+        # layers = []
+        # for i, ms_layer in enumerate(self.ms_layers):
+        #     channel = x[:, i*self.g:(i+1)*self.g,...]
+        #     if i >=1:
+        #         channel = channel + layers[i-1]
+        #     channel = ms_layer(channel)
+        #     layers.append(channel)
+        # return self.cv2(torch.cat(layers, 1))
 
         
 class MSBlock_D(MSBlock):
