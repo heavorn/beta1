@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 
 __all__ = ('Conv', 'Conv2', 'LightConv', 'DWConv', 'DWConvTranspose2d', 'ConvTranspose', 'Focus', 'GhostConv',
-           'ChannelAttention', 'SpatialAttention', 'CBAM', 'Concat', 'RepConv')
+           'ChannelAttention', 'SpatialAttention', 'CBAM', 'Concat', 'RepConv', 'PConv', 'GSConv')
 
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -66,6 +66,53 @@ class Conv2(Conv):
         self.conv.weight.data += w
         self.__delattr__('cv2')
         self.forward = self.forward_fuse
+
+
+class GSConv(nn.Module):
+    # GSConv https://github.com/AlanLi1997/slim-neck-by-gsconv
+    def __init__(self, c1, c2, k=1, s=1, g=1, act=True):
+        super().__init__()
+        c_ = c2 // 2
+        self.cv1 = Conv(c1, c_, k, s, act=act)
+        self.cv2 = Conv(c_, c_, 5, 1, g=c_, act=act)
+
+    def forward(self, x):
+        x1 = self.cv1(x)
+        x2 = torch.cat((x1, self.cv2(x1)), 1)
+        # shuffle
+        y = x2.reshape(x2.shape[0], 2, x2.shape[1] // 2, x2.shape[2], x2.shape[3])
+        y = y.permute(0, 2, 1, 3, 4)
+
+        return y.reshape(y.shape[0], -1, y.shape[3], y.shape[4])
+
+
+class PConv(nn.Module):
+
+    # def __init__(self, dim, n_div, forward):
+    def __init__(self, c, k=3, n=4):
+        super().__init__()
+        self.p_c = c // n
+        self.untoched_c = c - self.p_c
+        self.pconv = nn.Conv2d(self.p_c, self.p_c, k, 1, autopad(k, None, 1), bias=False)
+
+        # if forward == 'slicing':
+        #     self.forward = self.forward_slicing
+        # elif forward == 'split_cat':
+        #     self.forward = self.forward_split_cat
+        # else:
+        #     raise NotImplementedError
+
+    # def forward(self, x):
+    #     # only for inference
+    #     x = x.clone()   # !!! Keep the original input intact for the residual connection later
+    #     x[:, :self.p_c, :, :] = self.pconv(x[:, :self.p_c, :, :])
+
+    #     return x
+
+    def forward(self, x):
+        # for training/inference
+        x1, x2 = torch.split(x, [self.p_c, self.untoched_c], dim=1)
+        return torch.cat((self.pconv(x1), x2), 1)
 
 
 class LightConv(nn.Module):
