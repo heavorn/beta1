@@ -62,7 +62,9 @@ class C2f(nn.Module):
         self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
         self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
         # self.m = nn.ModuleList(MSBlockLayer(self.c, self.c) for _ in range(n))
-
+        # self.m = nn.ModuleList(FasterNetLayer(self.c) for _ in range(n))
+        # self.m = nn.ModuleList(GSBottleneck(self.c, self.c, 1, 1) for _ in range(n))
+        
     def forward(self, x):
         """Forward pass through C2f layer."""
         y = list(self.cv1(x).chunk(2, 1))
