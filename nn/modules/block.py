@@ -138,7 +138,7 @@ class MSBlockLayer(nn.Module):
 
 class MSBlock(nn.Module):
     """MSBlock"""
-    def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
+    def __init__(self, c1, c2, n=1, fas=False, e=2.0, k=3):
         super().__init__()
         n = 4
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
@@ -159,11 +159,11 @@ class MSBlock(nn.Module):
         # self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.ms_layers = [nn.Identity()]
-        # if fas:
-        #     self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(2))
-        # else:
-        #     self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
-        self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+        if fas:
+            self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
+        else:
+            self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+        # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
         self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.cv2 = Conv(self.c, c2, 1, 1)
