@@ -140,8 +140,9 @@ class MSBlock(nn.Module):
     """MSBlock"""
     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
         super().__init__()
+        n = 4
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
-        self.g = self.c // 3    # n=3 number of MSBlockLayer
+        self.g = self.c // n    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
 
         # self.ms_layers = []
@@ -158,17 +159,19 @@ class MSBlock(nn.Module):
         # self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.ms_layers = [nn.Identity()]
-        if fas:
-            self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(2))
-        else:
-            self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        # if fas:
+        #     self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(2))
+        # else:
+        #     self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(2))
+        self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
         self.ms_layers = nn.ModuleList(self.ms_layers)
 
         self.cv2 = Conv(self.c, c2, 1, 1)
 
     def forward(self, x):
         """Forward pass through MSBlock"""
-        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        # y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        y = list(self.cv1(x).split((self.g, self.g, self.g, self.g), 1))
         ms_layers = []
         for i, ms_layer in enumerate(self.ms_layers):
             x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
