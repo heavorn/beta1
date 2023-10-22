@@ -138,7 +138,7 @@ class MSBlockLayer(nn.Module):
 
 class MSBlock(nn.Module):
     """MSBlock"""
-    def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
+    def __init__(self, c1, c2, n=1, fas=False, e=3, k=3):
         super().__init__()
         n = 3
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
