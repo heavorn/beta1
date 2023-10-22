@@ -189,11 +189,44 @@ class MSBlock(nn.Module):
         # return self.cv2(torch.cat(layers, 1))
 
 
+
+# --------------- Previous Slim ------------------
+
+# class GSBottleneck(nn.Module):
+#     # GS Bottleneck https://github.com/AlanLi1997/slim-neck-by-gsconv
+#     def __init__(self, c1, c2, k=3, s=1):
+#         super().__init__()
+#         c_ = c2 // 2
+#         # for lighting
+#         self.conv_lighting = nn.Sequential(
+#             GSConv(c1, c_, 1, 1),
+#             GSConv(c_, c2, 3, 1, act=False))
+#         self.shortcut = Conv(c1, c2, 1, 1, act=False)
+
+#     def forward(self, x):
+#         return self.conv_lighting(x) + self.shortcut(x)
+
+# class VoVGSCSP(nn.Module):
+#     # VoVGSCSP module with GSBottleneck
+#     def __init__(self, c1, c2, e=0.5):
+#         super().__init__()
+#         c_ = int(c2 * e)  # hidden channels
+#         self.cv1 = Conv(c1, c_, 1, 1)
+#         self.gsb = GSBottleneck(c_, c_, 1, 1)
+#         self.cv2 = Conv(2*c_, c2, 1)  #
+
+#     def forward(self, x):
+#         x = self.cv1(x)
+#         return self.cv2(torch.cat((self.gsb(x), x), 1))
+
+
+# --------------- New Slim ------------------
+
 class GSBottleneck(nn.Module):
     # GS Bottleneck https://github.com/AlanLi1997/slim-neck-by-gsconv
-    def __init__(self, c1, c2, k=3, s=1):
+    def __init__(self, c1, c2, k=3, s=1, e=0.5):
         super().__init__()
-        c_ = c2 // 2
+        c_ = int(c2*e)
         # for lighting
         self.conv_lighting = nn.Sequential(
             GSConv(c1, c_, 1, 1),
@@ -206,16 +239,38 @@ class GSBottleneck(nn.Module):
 
 class VoVGSCSP(nn.Module):
     # VoVGSCSP module with GSBottleneck
-    def __init__(self, c1, c2, e=0.5):
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
         super().__init__()
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, c_, 1, 1)
-        self.gsb = GSBottleneck(c_, c_, 1, 1)
-        self.cv2 = Conv(2*c_, c2, 1)  #
+        self.cv2 = Conv(c1, c_, 1, 1)
+        # self.gc1 = GSConv(c_, c_, 1, 1)
+        # self.gc2 = GSConv(c_, c_, 1, 1)
+        # self.gsb = GSBottleneck(c_, c_, 1, 1)
+        self.gsb = nn.Sequential(*(GSBottleneck(c_, c_, e=1.0) for _ in range(n)))
+        self.res = Conv(c_, c_, 3, 1, act=False)
+        self.cv3 = Conv(2 * c_, c2, 1)  #
 
     def forward(self, x):
-        x = self.cv1(x)
-        return self.cv2(torch.cat((self.gsb(x), x), 1))
+        x1 = self.gsb(self.cv1(x))
+        y = self.cv2(x)
+        return self.cv3(torch.cat((y, x1), dim=1))
+
+
+class GSBottleneckC(GSBottleneck):
+    # cheap GS Bottleneck https://github.com/AlanLi1997/slim-neck-by-gsconv
+    def __init__(self, c1, c2, k=3, s=1):
+        super().__init__(c1, c2, k, s)
+        self.shortcut = DWConv(c1, c2, k, s, act=False)
+
+
+class VoVGSCSPC(VoVGSCSP):
+    # cheap VoVGSCSP module with GSBottleneck
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__(c1, c2)
+        c_ = int(c2 * 0.5)  # hidden channels
+        self.gsb = GSBottleneckC(c_, c_, 1, 1)
+
 
 
 # class VoVGSCSP(nn.Module):

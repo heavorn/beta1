@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 
 from nn.modules import (SPPF, Bottleneck, C2f, Concat, Conv, Conv2, ConvTranspose, Detect, DWConv, DWConvTranspose2d,
-                        Focus, GhostConv, RepConv, MSBlock, MSBlockLayer, FasterNetLayer, GSBottleneck, VoVGSCSP, CPS_A,
+                        Focus, GhostConv, RepConv, MSBlock, MSBlockLayer, FasterNetLayer, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A,
                         PConv, GSConv)
 
 from utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
@@ -498,7 +498,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
 
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
         if m in (Conv, ConvTranspose, GhostConv, Bottleneck, SPPF, DWConv, Focus, MSBlockLayer, MSBlock,
-                 C2f, nn.ConvTranspose2d, DWConvTranspose2d, GSBottleneck, VoVGSCSP, CPS_A, FasterNetLayer, PConv, GSConv):
+                 C2f, nn.ConvTranspose2d, DWConvTranspose2d, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A, FasterNetLayer, PConv, GSConv):
         # if m in (Classify, Conv, ConvTranspose, GhostConv, Bottleneck, GhostBottleneck, SPP, SPPF, DWConv, Focus,
         #          BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, nn.ConvTranspose2d, DWConvTranspose2d, C3x, RepC3):
             c1, c2 = ch[f], args[0]
