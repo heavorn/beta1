@@ -160,7 +160,7 @@ class MSBlock(nn.Module):
 
         self.ms_layers = [nn.Identity()]
         if fas:
-            self.ms_layers.extend(FasterNetLayer(self.g, k) for _ in range(n-1))
+            self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
         else:
             self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
         # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
@@ -303,11 +303,11 @@ class VoVGSCSPC(VoVGSCSP):
 
 class FasterNetLayer(nn.Module):
     """FasterNetLayer"""
-    def __init__(self, c, k=3, e=1.0, n=4):
+    def __init__(self, c, e=1.0, n=4):
         super().__init__()
         self.c_ = int(c * e)
-        self.cv1 = PConv(c, k, n)
-        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
+        self.cv1 = PConv(c, n)
+        self.cv2 = Conv(c, self.c_, 1, 1)
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):

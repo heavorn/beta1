@@ -113,25 +113,11 @@ class GSConv(nn.Module):
 class PConv(nn.Module):
 
     # def __init__(self, dim, n_div, forward):
-    def __init__(self, c, k=3, n=4):
+    def __init__(self, c, n=4):
         super().__init__()
         self.p_c = c // n
         self.untoched_c = c - self.p_c
-        self.pconv = nn.Conv2d(self.p_c, self.p_c, k, 1, autopad(k, None, 1), bias=False)
-
-        # if forward == 'slicing':
-        #     self.forward = self.forward_slicing
-        # elif forward == 'split_cat':
-        #     self.forward = self.forward_split_cat
-        # else:
-        #     raise NotImplementedError
-
-    # def forward(self, x):
-    #     # only for inference
-    #     x = x.clone()   # !!! Keep the original input intact for the residual connection later
-    #     x[:, :self.p_c, :, :] = self.pconv(x[:, :self.p_c, :, :])
-
-    #     return x
+        self.pconv = nn.Conv2d(self.p_c, self.p_c, 3, 1, 1, bias=False)
 
     def forward(self, x):
         # for training/inference
