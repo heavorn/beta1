@@ -136,6 +136,60 @@ class MSBlockLayer(nn.Module):
         return self.cv3(x)
 
 
+# class MSBlock(nn.Module):
+#     """MSBlock"""
+#     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
+#         super().__init__()
+#         n = 3
+#         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
+#         self.g = self.c // n    # n=3 number of MSBlockLayer
+#         self.cv1 = Conv(c1, self.c, 1, 1)
+
+#         # self.ms_layers = []
+#         # for i in range(3):
+#         #     if i == 0:
+#         #         self.ms_layers.append(nn.Identity())
+#         #         continue
+#         #     if fas:
+#         #         ms_layers = [FasterNetLayer(self.g) for _ in range(n)]
+#         #     else:
+#         #         ms_layers = [MSBlockLayer(self.g, self.g, k) for _ in range(n)]
+#         #     self.ms_layers.append(nn.Sequential(*ms_layers))
+#         #     # self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(n)]))
+#         # self.ms_layers = nn.ModuleList(self.ms_layers)
+
+#         self.ms_layers = [nn.Identity()]
+#         if fas:
+#             self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
+#             # self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
+#         else:
+#             self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+#         # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+#         self.ms_layers = nn.ModuleList(self.ms_layers)
+
+#         self.cv2 = Conv(self.c, c2, 1, 1)
+
+#     def forward(self, x):
+#         """Forward pass through MSBlock"""
+#         # y = list(self.cv1(x).split(self.g, 1))
+#         y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+#         ms_layers = []
+#         for i, ms_layer in enumerate(self.ms_layers):
+#             x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
+#             ms_layers.append(ms_layer(x))
+#         return self.cv2(torch.cat(ms_layers, 1))
+
+#         # x = self.cv1(x)
+#         # layers = []
+#         # for i, ms_layer in enumerate(self.ms_layers):
+#         #     channel = x[:, i*self.g:(i+1)*self.g,...]
+#         #     if i >=1:
+#         #         channel = channel + layers[i-1]
+#         #     channel = ms_layer(channel)
+#         #     layers.append(channel)
+#         # return self.cv2(torch.cat(layers, 1))
+
+
 class MSBlock(nn.Module):
     """MSBlock"""
     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
@@ -144,49 +198,24 @@ class MSBlock(nn.Module):
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
         self.g = self.c // n    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
-
-        # self.ms_layers = []
-        # for i in range(3):
-        #     if i == 0:
-        #         self.ms_layers.append(nn.Identity())
-        #         continue
-        #     if fas:
-        #         ms_layers = [FasterNetLayer(self.g) for _ in range(n)]
-        #     else:
-        #         ms_layers = [MSBlockLayer(self.g, self.g, k) for _ in range(n)]
-        #     self.ms_layers.append(nn.Sequential(*ms_layers))
-        #     # self.ms_layers.append(nn.Sequential(*[MSBlockLayer(self.g, self.g, k) for _ in range(n)]))
-        # self.ms_layers = nn.ModuleList(self.ms_layers)
-
         self.ms_layers = [nn.Identity()]
         if fas:
             self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
         else:
-            self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
-        # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+            self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
         self.ms_layers = nn.ModuleList(self.ms_layers)
-
         self.cv2 = Conv(self.c, c2, 1, 1)
 
     def forward(self, x):
         """Forward pass through MSBlock"""
-        y = list(self.cv1(x).split(self.g, 1))
-        # y = list(self.cv1(x).split((self.g, self.g, self.g, self.g), 1))
+        # y = list(self.cv1(x).split(self.g, 1))
+        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
         ms_layers = []
         for i, ms_layer in enumerate(self.ms_layers):
             x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
             ms_layers.append(ms_layer(x))
         return self.cv2(torch.cat(ms_layers, 1))
 
-        # x = self.cv1(x)
-        # layers = []
-        # for i, ms_layer in enumerate(self.ms_layers):
-        #     channel = x[:, i*self.g:(i+1)*self.g,...]
-        #     if i >=1:
-        #         channel = channel + layers[i-1]
-        #     channel = ms_layer(channel)
-        #     layers.append(channel)
-        # return self.cv2(torch.cat(layers, 1))
 
 
 
@@ -307,7 +336,7 @@ class FasterNetLayer(nn.Module):
         super().__init__()
         self.c_ = int(c * e)
         self.cv1 = PConv(c, n)
-        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
+        self.cv2 = Conv(c, self.c_, 1, 1)
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):
@@ -362,7 +391,6 @@ class CPS_A(nn.Module):
         y = list(self.cv1(x).split((self.c, self.c), 1))
         y.extend(m(y[-1]) for m in self.m)
         return self.cv2(self.cbam(torch.cat(y, 1)))
-
 
 
 
