@@ -60,9 +60,9 @@ class C2f(nn.Module):
         self.c = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
         self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
-        # self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
+        self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
         # self.m = nn.ModuleList(MSBlockLayer(self.c, self.c) for _ in range(n))
-        self.m = nn.ModuleList(FasterNetLayer(self.c) for _ in range(n))
+        # self.m = nn.ModuleList(FasterNetLayer(self.c) for _ in range(n))
         # self.m = nn.ModuleList(GSBottleneck(self.c, self.c, 1, 1) for _ in range(n))
         
     def forward(self, x):
@@ -138,7 +138,7 @@ class MSBlockLayer(nn.Module):
 
 class MSBlock(nn.Module):
     """MSBlock"""
-    def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
+    def __init__(self, c1, c2, n=1, fas=False, e=3, k=3):
         super().__init__()
         n = 3
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
