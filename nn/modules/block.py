@@ -138,7 +138,7 @@ class MSBlockLayer(nn.Module):
 
 class MSBlock(nn.Module):
     """MSBlock"""
-    def __init__(self, c1, c2, n=1, fas=False, e=3, k=3):
+    def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
         super().__init__()
         n = 3
         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
@@ -170,7 +170,7 @@ class MSBlock(nn.Module):
 
     def forward(self, x):
         """Forward pass through MSBlock"""
-        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        y = list(self.cv1(x).split(self.g, 1))
         # y = list(self.cv1(x).split((self.g, self.g, self.g, self.g), 1))
         ms_layers = []
         for i, ms_layer in enumerate(self.ms_layers):
@@ -307,7 +307,7 @@ class FasterNetLayer(nn.Module):
         super().__init__()
         self.c_ = int(c * e)
         self.cv1 = PConv(c, n)
-        self.cv2 = Conv(c, self.c_, 1, 1)
+        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):
@@ -315,31 +315,53 @@ class FasterNetLayer(nn.Module):
         return x + self.cv3(self.cv2(self.cv1(x)))
 
 
+# class CPS_A(nn.Module):
+#     """Faster Implementation of CPS_A Bottleneck with 2 convolutions."""
+
+#     def __init__(self, c1, c2, n=1, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
+#         super().__init__()
+#         self.c = int(c2 * e)  # hidden channels
+#         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
+#         self.cbam = CBAM((1 + n) * self.c)
+#         self.cv2 = Conv((1 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
+#         self.m = nn.ModuleList(FasterNetLayer(self.c) for _ in range(n))
+
+#     def forward(self, x):
+#         """Forward pass through CPS_A layer."""
+#         y = list(self.cv1(x).chunk(2, 1))
+#         layers = [y[0]]
+#         layers.extend(m(y[-1]) for m in self.m)
+#         return self.cv2(self.cbam(torch.cat(layers, 1)))
+
+#     def forward_split(self, x):
+#         """Forward pass using split() instead of chunk()."""
+#         y = list(self.cv1(x).split((self.c, self.c), 1))
+#         layers = [y[0]]
+#         layers.extend(m(y[-1]) for m in self.m)
+#         return self.cv2(self.cbam(torch.cat(layers, 1)))
+
 class CPS_A(nn.Module):
-    """Faster Implementation of CPS_A Bottleneck with 2 convolutions."""
+    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
 
     def __init__(self, c1, c2, n=1, g=1, e=0.5):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-
         self.c = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
-        self.cbam = CBAM((1 + n) * self.c)
-        self.cv2 = Conv((1 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
+        self.cbam = CBAM((2 + n) * self.c)
+        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
         self.m = nn.ModuleList(FasterNetLayer(self.c) for _ in range(n))
-
+        
     def forward(self, x):
-        """Forward pass through CPS_A layer."""
+        """Forward pass through C2f layer."""
         y = list(self.cv1(x).chunk(2, 1))
-        layers = [y[0]]
-        layers.extend(m(y[-1]) for m in self.m)
-        return self.cv2(self.cbam(torch.cat(layers, 1)))
+        y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(self.cbam(torch.cat(y, 1)))
 
     def forward_split(self, x):
         """Forward pass using split() instead of chunk()."""
         y = list(self.cv1(x).split((self.c, self.c), 1))
-        layers = [y[0]]
-        layers.extend(m(y[-1]) for m in self.m)
-        return self.cv2(self.cbam(torch.cat(layers, 1)))
+        y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(self.cbam(torch.cat(y, 1)))
 
 
 
