@@ -195,7 +195,7 @@ class MSBlock(nn.Module):
     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
         super().__init__()
         n = 3
-        self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
+        self.c = int(c2 * e) // 1    # e=1.5 for down sample layer
         self.g = self.c // n    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
         self.ms_layers = [nn.Identity()]
@@ -215,6 +215,32 @@ class MSBlock(nn.Module):
             x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
             ms_layers.append(ms_layer(x))
         return self.cv2(torch.cat(ms_layers, 1))
+
+
+class Res2Net(nn.Module):
+    """Res2Net"""
+    def __init__(self, c1, c2, n=1, fas=False, e=2):
+        super().__init__()
+        n = 4
+        self.c = int(c2 * e) // 1
+        self.g = self.c // n
+        self.cv1 = Conv(c1, self.c, 1, 1)
+        self.r2n_layers = [nn.Identity()]
+        if fas:
+            self.r2n_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
+        else:
+            self.r2n_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
+        self.r2n_layers = nn.ModuleList(self.r2n_layers)
+        self.cv2 = Conv(self.c, c2, 1, 1)
+
+    def forward(self, x):
+        """Forward pass through Res2Net"""
+        y = list(self.cv1(x).split(self.g, 1))
+        r2n_layers = []
+        for i, r2n_layer in enumerate(self.r2n_layers):
+            x_input = y[i] + r2n_layers[i-1] if i >= 1 else y[i]
+            r2n_layers.append(r2n_layer(x_input))
+        return self.cv2(torch.cat(r2n_layers, 1))
 
 
 
@@ -328,6 +354,7 @@ class VoVGSCSPC(VoVGSCSP):
 #     def forward(self, x):
 #         """Forward pass through FasterNetLayer"""
 #         return self.cv2(self.cv1(x))
+
 
 
 class FasterNetLayer(nn.Module):
