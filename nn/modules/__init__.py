@@ -13,7 +13,7 @@ torch.onnx.export(m, x, f)
 os.system(f'onnxsim {f} {f} && open {f}')
 """
 
-from .block import (DFL, SPPF, Bottleneck, C2f, MSBlockLayer, MSBlock, FasterNetLayer, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A)
+from .block import (DFL, SPPF, Bottleneck, C2f, MSBlockLayer, MSBlock, FasterNetLayer, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A, Res2Net)
 from .conv import (CBAM, ChannelAttention, Concat, Conv, Conv2, ConvTranspose, DWConv, DWConvTranspose2d, Focus,
                    GhostConv, LightConv, RepConv, SpatialAttention, PConv, GSConv)
 from .head import Detect
@@ -21,4 +21,4 @@ from .head import Detect
 __all__ = ('Conv', 'Conv2', 'LightConv', 'RepConv', 'DWConv', 'DWConvTranspose2d', 'ConvTranspose', 'Focus',
            'GhostConv', 'ChannelAttention', 'SpatialAttention', 'CBAM', 'Concat', 'DFL', 'SPPF',
            'C2f', 'Bottleneck', 'Detect', 'Segment', 'Pose', 'Classify', 'MSBlockLayer', 'MSBlock', 'PConv', 'GSConv',
-           'GSBottleneck', 'GSBottleneckC', 'VoVGSCSP', 'VoVGSCSPC', 'FasterNetLayer', 'CPS_A')
+           'GSBottleneck', 'GSBottleneckC', 'VoVGSCSP', 'VoVGSCSPC', 'FasterNetLayer', 'CPS_A', 'Res2Net')
