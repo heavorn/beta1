@@ -141,7 +141,7 @@ class MSBlockLayer(nn.Module):
 #     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
 #         super().__init__()
 #         n = 3
-#         self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
+#         self.c = int(c2 * e) // 1    # e=1.5 for down sample layer
 #         self.g = self.c // n    # n=3 number of MSBlockLayer
 #         self.cv1 = Conv(c1, self.c, 1, 1)
 
