@@ -238,8 +238,8 @@ class Res2Net(nn.Module):
         y = list(self.cv1(x).split(self.g, 1))
         r2n_layers = []
         for i, r2n_layer in enumerate(self.r2n_layers):
-            x_input = y[i] + r2n_layers[i-1] if i >= 1 else y[i]
-            r2n_layers.append(r2n_layer(x_input))
+            x = y[i] + r2n_layers[i-1] if i >= 1 else y[i]
+            r2n_layers.append(r2n_layer(x))
         return self.cv2(torch.cat(r2n_layers, 1))
 
 
@@ -363,7 +363,7 @@ class FasterNetLayer(nn.Module):
         super().__init__()
         self.c_ = int(c * e)
         self.cv1 = PConv(c, n)
-        self.cv2 = Conv(c, self.c_, 1, 1)
+        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):
