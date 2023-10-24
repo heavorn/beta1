@@ -9,7 +9,7 @@ import torch.nn as nn
 
 from nn.modules import (SPPF, Bottleneck, C2f, Concat, Conv, Conv2, ConvTranspose, Detect, DWConv, DWConvTranspose2d,
                         Focus, GhostConv, RepConv, MSBlock, MSBlockLayer, FasterNetLayer, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A,
-                        PConv, GSConv)
+                        PConv, GSConv, Res2Net)
 
 from utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from utils.checks import check_requirements, check_suffix, check_yaml
@@ -497,7 +497,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                     args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
 
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
-        if m in (Conv, ConvTranspose, GhostConv, Bottleneck, SPPF, DWConv, Focus, MSBlockLayer, MSBlock,
+        if m in (Conv, ConvTranspose, GhostConv, Bottleneck, SPPF, DWConv, Focus, MSBlockLayer, MSBlock, Res2Net,
                  C2f, nn.ConvTranspose2d, DWConvTranspose2d, GSBottleneck, GSBottleneckC, VoVGSCSP, VoVGSCSPC, CPS_A, FasterNetLayer, PConv, GSConv):
         # if m in (Classify, Conv, ConvTranspose, GhostConv, Bottleneck, GhostBottleneck, SPP, SPPF, DWConv, Focus,
         #          BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, nn.ConvTranspose2d, DWConvTranspose2d, C3x, RepC3):
@@ -506,7 +506,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
 
             args = [c1, c2, *args[1:]]
-            if m in (C2f, MSBlock):
+            if m in (C2f, MSBlock, Res2Net):
             # if m in (BottleneckCSP, C1, C2, C2f, C3, C3TR, C3Ghost, C3x, RepC3):
                 args.insert(2, n)  # number of repeats
                 n = 1
