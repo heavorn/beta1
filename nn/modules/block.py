@@ -364,7 +364,7 @@ class FasterNetLayer(nn.Module):
         super().__init__()
         self.c_ = int(c * e)
         self.cv1 = PConv(c, n)
-        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
+        self.cv2 = Conv(c, self.c_, 1, 1)
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):
