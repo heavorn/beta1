@@ -202,14 +202,15 @@ class MSBlock(nn.Module):
         if fas:
             self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
         else:
-            self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
+            # self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
+            self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
         self.ms_layers = nn.ModuleList(self.ms_layers)
         self.cv2 = Conv(self.c, c2, 1, 1)
 
     def forward(self, x):
         """Forward pass through MSBlock"""
-        # y = list(self.cv1(x).split(self.g, 1))
-        y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
+        y = list(self.cv1(x).split(self.g, 1))
+        # y = list(self.cv1(x).split((self.g, self.g, self.g), 1))
         ms_layers = []
         for i, ms_layer in enumerate(self.ms_layers):
             x = y[i] + ms_layers[i -1] if i >= 1 else y[i]
