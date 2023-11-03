@@ -195,15 +195,15 @@ class MSBlock(nn.Module):
     def __init__(self, c1, c2, n=1, fas=False, e=1.5, k=3):
         super().__init__()
         n = 3
-        self.c = int(c2 * e) // 1    # e=1.5 for down sample layer
+        self.c = int(c1 * e) // 1    # e=1.5 for down sample layer
         self.g = self.c // n    # n=3 number of MSBlockLayer
         self.cv1 = Conv(c1, self.c, 1, 1)
         self.ms_layers = [nn.Identity()]
         if fas:
             self.ms_layers.extend(FasterNetLayer(self.g) for _ in range(n-1))
         else:
-            # self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
-            self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
+            self.ms_layers.extend(GSBottleneck(self.g, self.g) for _ in range(n-1))
+            # self.ms_layers.extend(MSBlockLayer(self.g, self.g, k) for _ in range(n-1))
         self.ms_layers = nn.ModuleList(self.ms_layers)
         self.cv2 = Conv(self.c, c2, 1, 1)
 
@@ -364,7 +364,7 @@ class FasterNetLayer(nn.Module):
         super().__init__()
         self.c_ = int(c * e)
         self.cv1 = PConv(c, n)
-        self.cv2 = Conv(c, self.c_, 1, 1)
+        self.cv2 = Conv(c, self.c_, 1, 1, act=nn.ReLU())
         self.cv3 = nn.Conv2d(self.c_, c, 1, 1, bias=False)
 
     def forward(self, x):
